@@ -1,0 +1,12 @@
+formatter: markdown table
+
+recursive:
+  enabled: true
+  path: "modules"
+
+output:
+  file: README.md
+  mode: inject
+
+settings:
+  hide-empty: true

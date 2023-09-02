@@ -1,0 +1,10 @@
+repos:
+- repo: https://github.com/antonbabenko/pre-commit-terraform
+  rev: v1.83.0 # Get the latest from: https://github.com/antonbabenko/pre-commit-terraform/releases
+  hooks:
+    - id: terraform_fmt
+      args: ["."]
+    - id: terraform_docs # configured in .terraform-docs.yml
+      args: 
+        ["."]
+
