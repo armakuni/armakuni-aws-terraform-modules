@@ -1,4 +1,4 @@
-name: Apply Terraform
+name: Terratest modules
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -8,23 +8,14 @@ on:
   push:
     branches: [ "main" ]
 
-env:
-  tf_version: '1.5.5'
-  tg_version: '0.50.6'
-    
-concurrency: terraform-apply
-
 jobs:
   build:
-    strategy:
-      max-parallel: 1
-      fail-fast: false
-      matrix:
-        region: ["global", "eu-west-1"]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - uses: extractions/setup-just@v1
         
       - uses: actions/setup-go@v1
         with:
@@ -41,5 +32,5 @@ jobs:
           role-session-name: terratests-for-armakuni-aws-terraform-modules
           aws-region: eu-west-3
 
-      - name: Run tests
+      - name: Run Terratest (via Go)
         run: just test
