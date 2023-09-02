@@ -22,7 +22,7 @@ jobs:
           go-version: 1.21.0
 
       - name: Download Go modules
-        working-directory: tests
+        working-directory: test
         run: go mod download
 
       - name: Configure AWS credentials
