@@ -1,4 +1,4 @@
-name: Terratest modules
+name: Website Bucket Module
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -26,7 +26,7 @@ jobs:
         run: go mod download
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/armakuni-aws-terraform-modules-github-actions
           role-session-name: terratests-for-armakuni-aws-terraform-modules
