@@ -119,3 +119,6 @@ terraform.rc
 **/.terragrunt-cache
 infrastructure/backend.tf
 infrastructure/provider.tf
+
+# Ignore all the files that starts with temp name
+**/temp**.**

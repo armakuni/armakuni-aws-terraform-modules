@@ -2,25 +2,30 @@ package test
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
-	"github.com/gruntwork-io/terratest/modules/aws"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	awsTerratest "github.com/gruntwork-io/terratest/modules/aws"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
 )
 
-// An example of how to test the Terraform module in examples/terraform-aws-s3-example using Terratest.
-func TestTerraformAwsS3Example(t *testing.T) {
+func TestTerraformAwsS3WebsiteBucket(t *testing.T) {
 	t.Parallel()
 
 	// Give this S3 Bucket a unique ID for a name tag so we can distinguish it from any other Buckets provisioned
 	// in your AWS account
-	expectedName := fmt.Sprintf("terratest-website-bucket-test-%s", strings.ToLower(random.UniqueId()))
+	expectedBucketName := fmt.Sprintf("terratest-website-bucket-test-%s", strings.ToLower(random.UniqueId()))
 
 	// AWS region set in provider.tf or versions.tf
-	expectedAwsRegion := "eu-west-3"
+	expectedAwsRegion := "eu-west-2"
+
+	expectBucketPublicBlock := "{\n  PublicAccessBlockConfiguration: {\n    BlockPublicAcls: false,\n    BlockPublicPolicy: false,\n    IgnorePublicAcls: false,\n    RestrictPublicBuckets: false\n  }\n}"
 
 	// Construct the terraform options with default retryable errors to handle the most common retryable errors in
 	// terraform testing.
@@ -30,7 +35,7 @@ func TestTerraformAwsS3Example(t *testing.T) {
 
 		// Variables to pass to our Terraform code using -var options
 		Vars: map[string]interface{}{
-			"name":   expectedName,
+			"name":   expectedBucketName,
 			"region": expectedAwsRegion,
 		},
 	})
@@ -48,11 +53,36 @@ func TestTerraformAwsS3Example(t *testing.T) {
 	bucketID := terraform.Output(t, terraformOptions, "bucket_id")
 
 	// Verify that our Bucket has versioning enabled
-	actualStatus := aws.GetS3BucketVersioning(t, expectedAwsRegion, bucketID)
+	actualStatus := awsTerratest.GetS3BucketVersioning(t, expectedAwsRegion, bucketID)
 	expectedStatus := "Enabled"
 	assert.Equal(t, expectedStatus, actualStatus)
+
+	sess, err := session.NewSession(&aws.Config{
+		Region: &expectedAwsRegion},
+	)
+	// Create S3 service client
+	svc := s3.New(sess)
+
+	//Verify that our Bucket have ACL
+	actualBucketACL, err := svc.GetBucketAcl(&s3.GetBucketAclInput{Bucket: aws.String(expectedBucketName)})
+	if err != nil {
+		exitErrorf("Unable to GetBucketAclInput, %v", err)
+	}
+	assert.NotEmpty(t, actualBucketACL)
+
+	//Verify that our Bucket is Publicly Accessible
+	actualPublicAccessBlock, err := svc.GetPublicAccessBlock(&s3.GetPublicAccessBlockInput{Bucket: aws.String(expectedBucketName)})
+	if err != nil {
+		exitErrorf("Unable to GetPublicAccessBlock, %v", err)
+	}
+	assert.EqualValues(t, expectBucketPublicBlock, actualPublicAccessBlock.String())
 
 	// Verify that our Bucket does not have a policy attached
 	// assert.ErrorContains()
 	// aws.AssertS3BucketPolicyExistsE(t, expectedAwsRegion, bucketID)
+}
+
+func exitErrorf(msg string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, msg+"\n", args...)
+	os.Exit(1)
 }
