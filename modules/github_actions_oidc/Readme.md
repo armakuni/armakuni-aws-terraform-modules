@@ -1,5 +1,6 @@
-<!-- BEGIN_TF_DOCS -->
+# Github Actions OIDC Module
 
+<!-- BEGIN_TF_DOCS -->
 
 ## Providers
 
