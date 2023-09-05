@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -26,6 +27,8 @@ func TestTerraformAwsS3WebsiteBucket(t *testing.T) {
 	expectedAwsRegion := "eu-west-2"
 
 	expectBucketPublicBlock := "{\n  PublicAccessBlockConfiguration: {\n    BlockPublicAcls: false,\n    BlockPublicPolicy: false,\n    IgnorePublicAcls: false,\n    RestrictPublicBuckets: false\n  }\n}"
+	expectedCanonicalUserPermissions := []string{"WRITE_ACP", "READ_ACP", "READ", "WRITE"}
+	expectedGroupPermissions := []string{"READ", "READ_ACP", "WRITE"}
 
 	// Construct the terraform options with default retryable errors to handle the most common retryable errors in
 	// terraform testing.
@@ -63,12 +66,21 @@ func TestTerraformAwsS3WebsiteBucket(t *testing.T) {
 	// Create S3 service client
 	svc := s3.New(sess)
 
-	//Verify that our Bucket have ACL
+	//Verify that our Bucket have ACL and Permission matches the expected ones
 	actualBucketACL, err := svc.GetBucketAcl(&s3.GetBucketAclInput{Bucket: aws.String(expectedBucketName)})
 	if err != nil {
 		exitErrorf("Unable to GetBucketAclInput, %v", err)
 	}
 	assert.NotEmpty(t, actualBucketACL)
+	for _, b := range actualBucketACL.Grants {
+		if *b.Grantee.Type == "CanonicalUser" {
+			fmt.Println("Asserting CanonicalUser Permissions")
+			assert.True(t, slices.Contains(expectedCanonicalUserPermissions, *b.Permission))
+		} else {
+			fmt.Println("Asserting Group Permissions")
+			assert.True(t, slices.Contains(expectedGroupPermissions, *b.Permission))
+		}
+	}
 
 	//Verify that our Bucket is Publicly Accessible
 	actualPublicAccessBlock, err := svc.GetPublicAccessBlock(&s3.GetPublicAccessBlockInput{Bucket: aws.String(expectedBucketName)})
@@ -76,10 +88,6 @@ func TestTerraformAwsS3WebsiteBucket(t *testing.T) {
 		exitErrorf("Unable to GetPublicAccessBlock, %v", err)
 	}
 	assert.EqualValues(t, expectBucketPublicBlock, actualPublicAccessBlock.String())
-
-	// Verify that our Bucket does not have a policy attached
-	// assert.ErrorContains()
-	// aws.AssertS3BucketPolicyExistsE(t, expectedAwsRegion, bucketID)
 }
 
 func exitErrorf(msg string, args ...interface{}) {
