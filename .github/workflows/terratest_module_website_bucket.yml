@@ -36,3 +36,4 @@ jobs:
 
       - name: Run Terratest (via Go)
         run: just test $MODULE
+
