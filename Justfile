@@ -18,6 +18,6 @@ test_all timeout=timeout_default:
 
 # Test a specifc module with configurable timeout (default 15mins)
 test module timeout=timeout_default:
-  cd "modules/{{module}}/test{{module}}"; \
+  cd "modules/{{module}}/test/{{module}}"; \
   go test -timeout "{{timeout}}" -v
   
