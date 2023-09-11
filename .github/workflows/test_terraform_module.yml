@@ -11,6 +11,9 @@ on:
         description: The name of the modules to run the tests for (must match the folder name)
         required: true
         type: string
+    secrets:
+      AWS_ACCOUNT_ID:
+        required: true
 
 concurrency: terratest-${{ inputs.module-name }}
 

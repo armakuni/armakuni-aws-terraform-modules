@@ -1,5 +1,5 @@
 module "test_route53_zone" {
-  source    = "../../src"
+  source    = "../.."
   zone_name = var.zone_name
   records   = var.records
 }
