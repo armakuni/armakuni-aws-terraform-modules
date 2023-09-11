@@ -6,6 +6,13 @@ on:
 
 jobs:
   test-website-bucket:
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - website_bucket
+          - route53_zone
+
     uses: ./.github/workflows/test_terraform_module.yml
     with:
-      module-name: website_bucket
+      module-name: ${{ matrix.module }}
