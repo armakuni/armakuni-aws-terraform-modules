@@ -6,6 +6,6 @@ on:
 
 jobs:
   test-website-bucket:
-    uses: ./.github/workflows/test_module.yml
+    uses: ./.github/workflows/test_terraform_module.yml
     with:
       module-name: website_bucket
