@@ -15,7 +15,7 @@ on:
 concurrency: terratest-${{ inputs.module-name }}
 
 jobs:
-  build:
+  run-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

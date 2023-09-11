@@ -1,11 +1,11 @@
-name: Test Pipeline
+name: Test Terraform Modules
 
 on:
   push:
     branches: ["main"]
 
 jobs:
-  test-website-bucket:
+  test-module:
     strategy:
       fail-fast: false
       matrix:
