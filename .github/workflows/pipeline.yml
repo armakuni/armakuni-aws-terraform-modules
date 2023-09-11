@@ -1,0 +1,11 @@
+name: Test Pipeline
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  test-website-bucket:
+    uses: ./.github/workflows/test_module.yml
+    with:
+      module-name: website_bucket

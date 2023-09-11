@@ -1,15 +1,18 @@
-name: Website Bucket Module
+name: Test Terraform Module {{ inputs.module-name }}
 
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read  # This is required for actions/checkout
 
 on:
-  push:
-    branches: [ "main" ]
+  workflow_call:
+    inputs:
+      module-name:
+        description: The name of the modules to run the tests for (must match the folder name)
+        required: true
+        type: string
 
-env:
-  MODULE: website_bucket
+concurrency: terratest-{{ inputs.module-name }}
 
 jobs:
   build:
@@ -25,7 +28,7 @@ jobs:
           go-version: 1.21.0
 
       - name: Download Go modules
-        run: just deps $MODULE
+        run: just deps {{ inputs.module-name }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -35,5 +38,5 @@ jobs:
           aws-region: eu-west-3
 
       - name: Run Terratest (via Go)
-        run: just test $MODULE
+        run: just test {{ inputs.module-name }}
 
