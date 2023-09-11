@@ -1,4 +1,4 @@
-name: Test Terraform Module ${{ inputs.module-name }}
+name: Test Terraform Module
 
 permissions:
   id-token: write # This is required for requesting the JWT
