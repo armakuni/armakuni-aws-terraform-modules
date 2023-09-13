@@ -1,67 +1,48 @@
 package test
 
 import (
-  "github.com/gruntwork-io/terratest/modules/terraform"
-  "testing"
+	"github.com/gruntwork-io/terratest/modules/terraform"
+	"testing"
 )
 
-type RecordVar struct {
-  Name       string   `json:"name"`
-  RecordType string   `json:"type"`
-  Records    []string `json:"records"`
-  Ttl        int      `json:"ttl"`
-}
-
-type ModuleVars struct {
-  ZoneName string      `json:"zone_name"`
-  Records  []RecordVar `json:"records"`
-}
-
-func toTerraformOptions(path string, options interface{}) (terraform.Options, error) {
-  vars, err := structToMap(options)
-  if err != nil {
-    return terraform.Options{}, err
-  }
-  return terraform.Options{
-    TerraformDir: path,
-    Vars:         vars,
-  }, nil
+func toTerraformOptions(path string, vars *map[string]interface{}) terraform.Options {
+	return terraform.Options{
+		TerraformDir: path,
+		Vars:         *vars,
+	}
 }
 
 func TestTerraformAwsRoute53Zone(t *testing.T) {
-  /* ARRANGE */
-  options, err := toTerraformOptions("../../examples/route53_zone", &ModuleVars{
-    ZoneName: "terratest.website.test.co.uk.",
-    Records: []RecordVar{
-      {"one", "A", []string{"10.0.0.0", "192.0.0.0"}, 60},
-      {"two", "CNAME", []string{"dummy.armakuni.co.uk"}, 60},
-    },
-  })
-  if err != nil {
-    t.Fatalf("Failed to create terraform options: %s", err.Error())
-  }
-  terraformOptions := terraform.WithDefaultRetryableErrors(t, &options)
+	/* ARRANGE */
+	options := toTerraformOptions("../../examples/route53_zone", &map[string]interface{}{
+		"zone_name": "terraform-test.armakuni.com.",
+		"records": []map[string]interface{}{
+			{"name": "one", "type": "A", "records": []string{"10.0.0.0", "192.0.0.0"}, "ttl": 60},
+			{"name": "two", "type": "CNAME", "records": []string{"dummy.armakuni.co.uk"}, "ttl": 60},
+		},
+	})
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &options)
 
-  ///* ACTION */
-  terraform.InitAndPlan(t, terraformOptions)
-  defer terraform.Destroy(t, terraformOptions)
-  terraform.InitAndApply(t, terraformOptions)
+	///* ACTION */
+	terraform.InitAndPlan(t, terraformOptions)
+	defer terraform.Destroy(t, terraformOptions)
+	terraform.InitAndApply(t, terraformOptions)
 
-  /* ASSERTIONS */
-  zoneID := terraform.Output(t, terraformOptions, "zone_id")
+	/* ASSERTIONS */
+	zoneID := terraform.Output(t, terraformOptions, "zone_id")
 
-  nameServers := GetRoute53HostedZoneNameServers(t, zoneID)
-  if len(nameServers) < 1 {
-    t.Errorf("No nameservers return for hosted zone")
-    return
-  }
+	nameServers := GetRoute53HostedZoneNameServers(t, zoneID)
+	if len(nameServers) < 1 {
+		t.Errorf("No nameservers return for hosted zone")
+		return
+	}
 
-  dnsServer := nameServers[0]
+	dnsServer := nameServers[0]
 
-  lookupOne := FetchDNSRecords(t, "one.terratest.website.test.co.uk", dnsServer)
-  lookupOne.AssertHasARecord("10.0.0.0")
-  lookupOne.AssertHasARecord("192.0.0.0")
+	lookupOne := FetchDNSRecords(t, "one.terraform-test.armakuni.com", dnsServer)
+	lookupOne.AssertHasARecord("10.0.0.0")
+	lookupOne.AssertHasARecord("192.0.0.0")
 
-  lookupTwo := FetchDNSRecords(t, "two.terratest.website.test.co.uk", dnsServer)
-  lookupTwo.AssertHasCNAMERecord("dummy.armakuni.co.uk.")
+	lookupTwo := FetchDNSRecords(t, "two.terraform-test.armakuni.com", dnsServer)
+	lookupTwo.AssertHasCNAMERecord("dummy.armakuni.co.uk.")
 }
