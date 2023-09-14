@@ -2,6 +2,7 @@ package test
 
 import (
 	"os"
+	"strings"
 
 	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -22,4 +23,9 @@ func InitAndPlanAndShowWithStructNoLogTempPlanFileE(t testing.TestingT, options 
 
 	options.PlanFilePath = tmpFile.Name()
 	return terraform.InitAndPlanAndShowWithStructE(t, options)
+}
+
+func TFResourceType(resource string) string {
+	resourceSegments := strings.Split(resource, ".")
+	return resourceSegments[len(resourceSegments)-2]
 }
