@@ -1,8 +1,10 @@
 package test
 
 import (
-	"github.com/gruntwork-io/terratest/modules/terraform"
 	"testing"
+
+	dnsassertions "github.com/armakuni/go-dns-assertions"
+	"github.com/gruntwork-io/terratest/modules/terraform"
 )
 
 func toTerraformOptions(path string, vars *map[string]interface{}) terraform.Options {
@@ -39,10 +41,11 @@ func TestTerraformAwsRoute53Zone(t *testing.T) {
 
 	dnsServer := nameServers[0]
 
-	lookupOne := FetchDNSRecords(t, "one.terraform-test.armakuni.com", dnsServer)
+	fetcher := dnsassertions.NewTestFetcher(t)
+	lookupOne := fetcher.FetchDNSRecords("one.terraform-test.armakuni.com", dnsServer)
 	lookupOne.AssertHasARecord("10.0.0.0")
 	lookupOne.AssertHasARecord("192.0.0.0")
 
-	lookupTwo := FetchDNSRecords(t, "two.terraform-test.armakuni.com", dnsServer)
+	lookupTwo := fetcher.FetchDNSRecords("two.terraform-test.armakuni.com", dnsServer)
 	lookupTwo.AssertHasCNAMERecord("dummy.armakuni.co.uk.")
 }
