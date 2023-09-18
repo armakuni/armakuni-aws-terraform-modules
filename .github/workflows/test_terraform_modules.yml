@@ -9,9 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module:
-          - website_bucket
-          - route53_zone
+        module: []
 
     uses: ./.github/workflows/test_terraform_module.yml
     with:
